@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Registration (MongoDB)</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 520px; margin: auto; }
+    label { display:block; margin-top: 12px; }
+    input { width: 100%; padding: 8px; margin-top: 6px; box-sizing: border-box; }
+    button { margin-top: 16px; padding: 10px 14px; }
+    .message { margin-top: 12px; }
+    .card { border: 1px solid #ddd; padding: 10px; border-radius: 6px; margin-top: 8px; background:#fafafa }
+  </style>
+</head>
+<body>
+
+  <h2>Register</h2>
+
+  <form id="regForm">
+    <label>First Name
+      <input type="text" id="firstName" required />
+    </label>
+
+    <label>Last Name
+      <input type="text" id="lastName" required />
+    </label>
+
+    <label>Contact Number
+      <input type="tel" id="contactNumber" pattern="[0-9]{7,15}" required />
+    </label>
+
+    <label>Email ID
+      <input type="email" id="email" required />
+    </label>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <div class="message" id="message"></div>
+
+  <h3>Recent Registrations</h3>
+  <div id="recent"></div>
+
+  <script>
+    const form = document.getElementById("regForm");
+    const msg = document.getElementById("message");
+    const recent = document.getElementById("recent");
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const saved = sessionStorage.getItem("registration");
+      if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById("firstName").value = data.firstName;
+        document.getElementById("lastName").value = data.lastName;
+        document.getElementById("contactNumber").value = data.contactNumber;
+        document.getElementById("email").value = data.email;
+      }
+
+      const r = await fetch("/api/users");
+      const users = await r.json();
+      recent.innerHTML = users.map(u => `
+        <div class="card">
+          <strong>${u.firstName} ${u.lastName}</strong><br>
+          ${u.email} • ${u.contactNumber}<br>
+          <small>${new Date(u.createdAt).toLocaleString()}</small>
+        </div>
+      `).join("");
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "";
+
+      const payload = {
+        firstName: firstName.value.trim(),
+        lastName: lastName.value.trim(),
+        contactNumber: contactNumber.value.trim(),
+        email: email.value.trim().toLowerCase()
+      };
+
+      sessionStorage.setItem("registration", JSON.stringify(payload));
+
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        msg.style.color = "green";
+        msg.textContent = data.message;
+
+        recent.innerHTML =
+          `<div class="card">
+            <strong>${payload.firstName} ${payload.lastName}</strong><br>
+            ${payload.email} • ${payload.contactNumber}<br>
+            <small>Just now</small>
+          </div>` + recent.innerHTML;
+      } else {
+        msg.style.color = "red";
+        msg.textContent = data.error;
+      }
+    });
+  </script>
+
+</body>
+</html>
