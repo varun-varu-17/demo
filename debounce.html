@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Simple Search with Debounce</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+
+    input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+    }
+
+    .result {
+      padding: 8px;
+      background: #f2f2f2;
+      margin-top: 8px;
+      border-radius: 5px;
+      width: 300px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Search App (Debounce Example)</h2>
+
+  <input type="text" id="searchBox" placeholder="Search..." />
+
+  <div id="output"></div>
+
+  <script>
+    // Sample data to search
+    const data = ["apple", "banana", "orange", "grapes", "pineapple", "mango"];
+
+    // DEBOUNCE FUNCTION → Runs only after user stops typing
+    function debounce(fn, delay) {
+      let timer;
+      return function (value) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(value), delay);
+      };
+    }
+
+    // Actual search logic
+    function search(value) {
+      const out = document.getElementById("output");
+      out.innerHTML = "";
+
+      const results = data.filter(item => item.includes(value.toLowerCase()));
+
+      results.forEach(r => {
+        out.innerHTML += `<div class='result'>${r}</div>`;
+      });
+    }
+
+    // Wrap search inside debounce
+    const debouncedSearch = debounce(search, 500);
+
+    // Input listener
+    document.getElementById("searchBox").addEventListener("input", function () {
+      debouncedSearch(this.value);
+    });
+  </script>
+</body>
+
+</html>
